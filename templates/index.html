@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Video ve ses dosyalarından otomatik transkripsiyon oluşturun. 5GB'a kadar dosya yükleme desteği.">
+    <title>Video Transkripsiyon | AI ile Otomatik Altyazı</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-icon">🎬</div>
+            <h1>Video Transkripsiyon</h1>
+            <p>Video veya ses dosyanızı yükleyin, AI ile transkripsiyonunu çıkaralım</p>
+        </header>
+
+        <!-- Upload Card -->
+        <div class="card">
+            <!-- Drop Zone -->
+            <div class="drop-zone" id="drop-zone">
+                <span class="drop-zone-icon">📁</span>
+                <p class="drop-zone-text">
+                    Dosyayı sürükleyip bırakın veya <strong>tıklayarak seçin</strong>
+                </p>
+                <p class="drop-zone-hint">
+                    MP4, MKV, AVI, MOV, WebM, MP3, WAV — Maks 5 GB
+                </p>
+            </div>
+            <input type="file" id="file-input" accept="video/*,audio/*,.mp4,.mkv,.avi,.mov,.webm,.mp3,.wav,.ogg,.flac,.m4a,.wmv">
+
+            <!-- File Info -->
+            <div class="file-info" id="file-info">
+                <span class="file-icon">🎥</span>
+                <div class="file-details">
+                    <div class="file-name" id="file-name">video.mp4</div>
+                    <div class="file-size" id="file-size">0 MB</div>
+                </div>
+                <button class="file-remove" id="file-remove" title="Dosyayı kaldır">✕</button>
+            </div>
+
+            <!-- Upload Button -->
+            <button class="btn-upload" id="btn-upload">🚀 Transkripsiyon Başlat</button>
+
+            <!-- Progress -->
+            <div class="progress-section" id="progress-section">
+                <div class="progress-header">
+                    <span class="progress-label" id="progress-label">Yükleniyor</span>
+                    <span class="progress-value" id="progress-value">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <div class="progress-message" id="progress-message">
+                    <span class="spinner"></span> Hazırlanıyor...
+                </div>
+            </div>
+
+            <!-- Error -->
+            <div class="error-section" id="error-section"></div>
+        </div>
+
+        <!-- Result Card -->
+        <div class="result-section" id="result-section">
+            <div class="card">
+                <div class="result-header">
+                    <h3>📝 Transkripsiyon Sonucu</h3>
+                    <span class="status-badge success">✓ Tamamlandı</span>
+                </div>
+
+                <div class="result-meta">
+                    <div class="result-meta-item">
+                        🌐 Dil: <span id="result-language">—</span>
+                    </div>
+                    <div class="result-meta-item">
+                        ⏱️ Süre: <span id="result-duration">—</span>
+                    </div>
+                    <div class="result-meta-item">
+                        📊 Segment: <span id="result-segments">—</span>
+                    </div>
+                </div>
+
+                <div class="transcript-box" id="transcript-box"></div>
+
+                <div class="actions">
+                    <button class="btn-action primary btn-copy" onclick="copyTranscript()">
+                        📋 Kopyala
+                    </button>
+                    <button class="btn-action" onclick="downloadTranscript('txt')">
+                        📄 TXT İndir
+                    </button>
+                    <button class="btn-action" onclick="downloadTranscript('srt')">
+                        🎬 SRT İndir
+                    </button>
+                    <button class="btn-action" onclick="downloadTranscript('vtt')">
+                        📺 VTT İndir
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Transcription Button -->
+        <button class="btn-new" id="btn-new" onclick="startNewTranscription()">
+            ➕ Yeni Transkripsiyon
+        </button>
+
+        <!-- Footer -->
+        <footer class="footer">
+            Whisper AI ile güçlendirilmiştir · Maks 5 GB dosya desteği
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

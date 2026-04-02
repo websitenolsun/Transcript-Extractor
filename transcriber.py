@@ -4,6 +4,7 @@ Uses faster-whisper for efficient transcription with progress reporting.
 """
 
 import os
+import shutil
 import subprocess
 import threading
 import uuid
@@ -64,6 +65,48 @@ class TranscriptionEngine:
         self.jobs: dict[str, TranscriptionJob] = {}
         self._model = None
         self._model_lock = threading.Lock()
+        self._ffmpeg_path: Optional[str] = None
+
+    def _resolve_ffmpeg_path(self) -> str:
+        """
+        Resolve FFmpeg executable path.
+        Priority:
+        1) FFMPEG_PATH environment variable
+        2) ffmpeg in system PATH
+        3) imageio-ffmpeg bundled binary (if installed)
+        """
+        if self._ffmpeg_path:
+            return self._ffmpeg_path
+
+        env_path = os.environ.get("FFMPEG_PATH")
+        if env_path:
+            if os.path.exists(env_path):
+                self._ffmpeg_path = env_path
+                return env_path
+            raise RuntimeError(
+                "FFMPEG_PATH tanımlı ama dosya bulunamadı. "
+                f"Değer: {env_path}"
+            )
+
+        system_ffmpeg = shutil.which("ffmpeg")
+        if system_ffmpeg:
+            self._ffmpeg_path = system_ffmpeg
+            return system_ffmpeg
+
+        try:
+            from imageio_ffmpeg import get_ffmpeg_exe
+            bundled_ffmpeg = get_ffmpeg_exe()
+            if bundled_ffmpeg and os.path.exists(bundled_ffmpeg):
+                self._ffmpeg_path = bundled_ffmpeg
+                return bundled_ffmpeg
+        except Exception:
+            pass
+
+        raise RuntimeError(
+            "FFmpeg bulunamadı. Sunucuya ffmpeg kurun veya "
+            "FFMPEG_PATH ortam değişkenini ayarlayın. "
+            "Alternatif olarak requirements.txt içine imageio-ffmpeg ekleyin."
+        )
 
     def _get_model(self):
         """Lazy-load the whisper model."""
@@ -143,9 +186,10 @@ class TranscriptionEngine:
     def _extract_audio(self, video_path: str) -> str:
         """Extract audio from video using FFmpeg."""
         audio_path = video_path.rsplit(".", 1)[0] + ".wav"
+        ffmpeg_path = self._resolve_ffmpeg_path()
 
         cmd = [
-            "ffmpeg", "-i", video_path,
+            ffmpeg_path, "-i", video_path,
             "-vn",                    # no video
             "-acodec", "pcm_s16le",   # 16-bit PCM
             "-ar", "16000",           # 16kHz sample rate (optimal for Whisper)
@@ -154,12 +198,17 @@ class TranscriptionEngine:
             audio_path,
         ]
 
-        process = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=600,  # 10 min timeout
-        )
+        try:
+            process = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=600,  # 10 min timeout
+            )
+        except FileNotFoundError as exc:
+            raise RuntimeError(
+                "FFmpeg çalıştırılamadı. Binary bulunamadı veya çalıştırma izni yok."
+            ) from exc
 
         if process.returncode != 0:
             raise RuntimeError(f"FFmpeg hatası: {process.stderr[:500]}")
